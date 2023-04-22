@@ -20,6 +20,17 @@ trap 'rm -f ${BASE}$$.s ${BASE}$$.c ${BASE}$$.o ${BASE}$$; exit 1' 1 2 15
 
 LDLIBS=-lm
 
+# check for Mac arm64
+MACHINE=$(echo $OS| cut -d'-' -f 2)
+echo "check for Mac arm64: OS=$OS; MACHINE=$MACHINE"
+if [ $MACHINE = "apple" ]
+then
+    echo "Apple, so setting include path for c header files"
+    export C_INCLUDE_PATH=`xcrun --show-sdk-path`/usr/include
+    CFLAGS="${CFLAGS} -I ${C_INCLUDE_PATH}"
+    echo "CFLAGS=$CFLAGS"
+fi
+
 # check for HP-UX's ANSI compiler
 echo "main(int ac, char *av[]) { int i; }" > ${BASE}$$.c
 if ${CC} ${CFLAGS} -o ${BASE}$$ ${BASE}$$.c 1>${NULL} 2>${NULL}
@@ -33,7 +44,7 @@ else
 	fi
 fi
 rm -f ${BASE}$$ ${BASE}$$.o ${BASE}$$.c
-	
+
 # check for IA64 HP-UX w/ HP's ANSI compiler; may need pointer swizzling
 arch=`echo $OS | awk -F- '{print $1;}'`
 if [ X$CC = "Xcc" -a X$arch = "Xia64" ]
@@ -48,7 +59,7 @@ then
 		&& CFLAGS="${CFLAGS} +DD64"
 	rm -f ${BASE}$$ ${BASE}$$.o ${BASE}$$.c
 fi
-	
+
 # check for bcopy (optionally set the SYS5 flag)
 echo "#include <string.h>" > ${BASE}$$.c
 echo "main() { char a[256], b[256]; bcopy(a, b, 256); }" >> ${BASE}$$.c
@@ -249,4 +260,7 @@ rm -f ${BASE}$$ ${BASE}$$.o ${BASE}$$.c
 if [ ! -d ${BINDIR} ]; then mkdir -p ${BINDIR}; fi
 
 # now go ahead and build everything!
+echo "CFLAGS=$CFLAGS"
 ${MAKE} OS="${OS}" CC="${CC}" CFLAGS="${CFLAGS}" LDLIBS="${LDLIBS}" O="${BINDIR}" $*
+
+echo Compiler: $CC
