@@ -21,6 +21,8 @@ flushdisk(int fd)
 
 #endif
 
+#include	<stdlib.h>
+
 #ifdef	MAIN
 int
 main(int ac, char **av)
